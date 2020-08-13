@@ -15,21 +15,21 @@ import java.util.*;
 
 public class App {
 
-    private static final String name="软件著作权代码文档生成器";
-    private static final String version="v1.0";
-    private static final String sourcePath="F:\\Idea\\RuanZhuCode";
-    private static final String outputPath="F:\\Idea\\RuanZhuCode";
-    private static final String[] myExcludeFiles =new String[]{"F:\\Idea\\RuanZhuCode\\RuanZhuCode.iml"};
-    private static final String[] myExcludeDirs=new String[]{"F:\\Idea\\RuanZhuCode\\.idea","F:\\Idea\\RuanZhuCode\\target","F:\\Idea\\RuanZhuCode\\src\\test"};
+    private static final String name = "软件著作权代码文档生成器";
+    private static final String version = "v1.1";
+    private static final String sourcePath = "F:\\Idea\\RuanZhuCode";
+    private static final String outputPath = "F:\\Idea\\RuanZhuCode";
+    private static final String[] myExcludeFiles = new String[]{"F:\\Idea\\RuanZhuCode\\RuanZhuCode.iml", "F:\\Idea\\RuanZhuCode\\README.md"};
+    private static final String[] myExcludeDirs = new String[]{"F:\\Idea\\RuanZhuCode\\.idea", "F:\\Idea\\RuanZhuCode\\target", "F:\\Idea\\RuanZhuCode\\src\\test"};
 
 
     public static void main(String[] args) throws IOException {
-        List<String> excludeDirs= Arrays.asList(myExcludeDirs);
+        List<String> excludeDirs = Arrays.asList(myExcludeDirs);
         String[] audios = new String[]{"mp3", "wav", "aif", "aiff", "mp1", "mp2", "ra", "ram", "mid", "rmi", "m4a", "wma", "cda", "ogg", "ape", "flac", "aac", "ac3", "mmf", "amr", "m4r", "wavpack"};
         String[] videos = new String[]{"avi", "mov", "qt", "asf", "rm", "rmvb", "navi", "divx", ",mp4", "mpeg", "mpg", "flv", "mkv", "3gp", "wmv", "vob", "swf"};
         String[] images = new String[]{"webp", "jpg", "png", "ico", "bmp", "gif", "tif", "tga", "pcx", "jpeg", "exif", "fpx", "svg", "psd", "cdr", "pcd", "dxf", "ufo", "eps", "ai", "hdri", "raw", "wmf", "flic", "emf"};
         String[] docs = new String[]{"doc", "docx", "xls", "ppt", "pptx", "pdf"};
-        String[] executable = new String[]{"exe","apk","ipa","app"};
+        String[] executable = new String[]{"exe", "apk", "ipa", "app"};
         String[] zips = new String[]{"zip", "rar", "arj", "z", "tar", "gz", "iso", "jar"};
         List<String> excludeFiles = new ArrayList<>();
         excludeFiles.addAll(Arrays.asList(audios));
@@ -46,7 +46,7 @@ public class App {
         while (!dirQueue.isEmpty()) {
             File dir = dirQueue.poll();
             for (File f : dir.listFiles()) {
-                if (f.isDirectory()&&!excludeDirs.contains(f.getAbsolutePath()))
+                if (f.isDirectory() && !excludeDirs.contains(f.getAbsolutePath())&&!f.getName().equals(".git"))
                     dirQueue.add(f);
                 else if (f.isFile() && !matchExclude(f, excludeFiles))
                     files.add(f);
@@ -116,7 +116,7 @@ public class App {
         end.addNewFldChar().setFldCharType(STFldCharType.END);
         CTSectPr sectPr = doc.getDocument().getBody().isSetSectPr() ? doc.getDocument().getBody().getSectPr() : doc.getDocument().getBody().addNewSectPr();
         XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(doc, sectPr);
-        policy.createFooter(STHdrFtr.DEFAULT, new XWPFParagraph[] { footer });
+        policy.createFooter(STHdrFtr.DEFAULT, new XWPFParagraph[]{footer});
     }
 
     private static void createHeader(XWPFDocument doc) {
@@ -126,7 +126,7 @@ public class App {
         XWPFParagraph paragraph = header.createParagraph();
         paragraph.setBorderBottom(Borders.THICK);
         XWPFRun run = paragraph.createRun();
-        run.setText(name+" "+version+" 源代码");
+        run.setText(name + " " + version + " 源代码");
         run.setFontFamily("等线 (中文正文)");
         run.setFontSize(9);
     }
@@ -134,7 +134,7 @@ public class App {
 
     private static boolean matchExclude(File f, List<String> excludeList) {
         for (String e : excludeList)
-            if (f.getAbsolutePath().equals(e) || f.getName().endsWith("." + e.toLowerCase()))
+            if (f.getAbsolutePath().equals(e) || f.getName().equals(".gitignore") || f.getName().endsWith("." + e.toLowerCase()))
                 return true;
         return false;
     }
