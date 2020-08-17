@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -62,11 +63,8 @@ public class App {
         s = s.replaceAll("(?<!:)\\/\\/.*|\\/\\*(\\s|.)*?\\*\\/", "");//删除“//”注释
         s = s.replaceAll("\\/\\*(\\s|.)*?\\*\\/", "");//删除“/**/”注释
         s = s.replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");//删除空行
-        XWPFDocument doc = new XWPFDocument();
+        XWPFDocument doc = new XWPFDocument(new FileInputStream("template/template.docx"));
         CTSectPr padding = doc.getDocument().getBody().addNewSectPr();
-        CTLineNumber ctLineNumber = padding.addNewLnNumType();
-        ctLineNumber.setCountBy(BigInteger.ONE);
-        ctLineNumber.setRestart(STLineNumberRestart.NEW_PAGE);
         CTPageMar pageMar = padding.addNewPgMar();
         pageMar.setLeft(BigInteger.valueOf(1440L));
         pageMar.setTop(BigInteger.valueOf(1100L));
@@ -90,12 +88,17 @@ public class App {
             r1.setText(scanner.nextLine());
         }
         scanner.close();
+        doc.getDocument().getBody().removeP(0);
         File file = new File(outputPath+"/"+name+version+".docx");
         if (file.exists())
             file.delete();
         else
             file.createNewFile();
         FileOutputStream out = new FileOutputStream(file);
+        doc.getProperties().getCoreProperties().setCreator("RuanZhuCode");
+        doc.getProperties().getCoreProperties().setLastModifiedByUser("RuanZhuCode");
+        doc.getProperties().getCoreProperties().setRevision("1");
+        doc.getProperties().getCoreProperties().setModified(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
         doc.write(out);
         out.close();
     }
