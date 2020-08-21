@@ -1,15 +1,14 @@
 package cn.devmeteor.ruanzhucode;
 
 
-import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
-import org.apache.poi.xwpf.usermodel.*;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -17,11 +16,13 @@ import java.util.*;
 public class App {
 
     private static final String name = "软件著作权代码文档生成器";
-    private static final String version = "v1.1";
+    private static final String version = "v1.0.0";
     private static final String sourcePath = "F:\\Idea\\RuanZhuCode";
     private static final String outputPath = "F:\\Idea\\RuanZhuCode";
-    private static final String[] myExcludeFiles = new String[]{"F:\\Idea\\RuanZhuCode\\RuanZhuCode.iml", "F:\\Idea\\RuanZhuCode\\README.md"};
-    private static final String[] myExcludeDirs = new String[]{"F:\\Idea\\RuanZhuCode\\.idea", "F:\\Idea\\RuanZhuCode\\target", "F:\\Idea\\RuanZhuCode\\src\\test"};
+    private static final String[] myExcludeFiles = new String[]{"F:\\Idea\\RuanZhuCode\\RuanZhuCode.iml","F:\\Idea\\RuanZhuCode\\README.md"};
+    private static final String[] myExcludeDirs = new String[]{"F:\\Idea\\RuanZhuCode\\target","F:\\Idea\\RuanZhuCode\\.idea","F:\\Idea\\RuanZhuCode\\src\\test"};
+    private static final String[] additionalFiles = new String[]{};
+    private static final String[] additionalDirs = new String[]{};
 
 
     public static void main(String[] args) throws IOException {
@@ -43,43 +44,43 @@ public class App {
         File root = new File(sourcePath);
         Queue<File> dirQueue = new ArrayDeque<>();
         dirQueue.add(root);
+        for (String additional : additionalDirs)
+            dirQueue.add(new File(additional));
         List<File> files = new ArrayList<>();
         while (!dirQueue.isEmpty()) {
             File dir = dirQueue.poll();
             for (File f : dir.listFiles()) {
-                if (f.isDirectory() && !excludeDirs.contains(f.getAbsolutePath())&&!f.getName().equals(".git"))
+                if (f.isDirectory() && !excludeDirs.contains(f.getAbsolutePath()) && !f.getName().equals(".git"))
                     dirQueue.add(f);
                 else if (f.isFile() && !matchExclude(f, excludeFiles))
                     files.add(f);
             }
         }
+        for (String additional : additionalFiles)
+            files.add(new File(additional));
         String s = "\n   ";
         for (File file : files) {
-            Scanner scanner = new Scanner(new FileInputStream(file));
+            Scanner scanner = new Scanner(new FileInputStream(file),"UTF-8");
             while (scanner.hasNext())
                 s += scanner.nextLine() + "\n";
             scanner.close();
         }
-        s = s.replaceAll("(?<!:)\\/\\/.*|\\/\\*(\\s|.)*?\\*\\/", "");//删除“//”注释
+        System.out.println(s);
+        s = s.replaceAll("(?<!:)\\/\\/.*", "");//删除“//”注释
         s = s.replaceAll("\\/\\*(\\s|.)*?\\*\\/", "");//删除“/**/”注释
         s = s.replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");//删除空行
         XWPFDocument doc = new XWPFDocument(new FileInputStream("template/template.docx"));
-        CTSectPr padding = doc.getDocument().getBody().addNewSectPr();
-        CTPageMar pageMar = padding.addNewPgMar();
-        pageMar.setLeft(BigInteger.valueOf(1440L));
-        pageMar.setTop(BigInteger.valueOf(1100L));
-        pageMar.setRight(BigInteger.valueOf(1440L));
-        pageMar.setBottom(BigInteger.valueOf(1100L));
-        createHeader(doc);
-        createFooter(doc);
+        List<XWPFRun> runs = doc.getHeaderList().get(1).getParagraphs().get(1).getRuns();
+        runs.get(0).setText(name,0);
+        runs.get(1).setText(version,0);
         Scanner scanner = new Scanner(s);
-        int total=0;
-        while (scanner.hasNext()){
+        int total = 0;
+        while (scanner.hasNext()) {
             total++;
             scanner.nextLine();
         }
-        System.out.println("总计："+total+"行");
-        scanner=new Scanner(s);
+        System.out.println("总计：" + total + "行");
+        scanner = new Scanner(s);
         while (scanner.hasNext()) {
             XWPFParagraph p1 = doc.createParagraph();
             XWPFRun r1 = p1.createRun();
@@ -89,49 +90,13 @@ public class App {
         }
         scanner.close();
         doc.getDocument().getBody().removeP(0);
-        File file = new File(outputPath+"/"+name+version+".docx");
-        if (file.exists())
-            file.delete();
-        else
-            file.createNewFile();
-        FileOutputStream out = new FileOutputStream(file);
-        doc.getProperties().getCoreProperties().setCreator("RuanZhuCode");
-        doc.getProperties().getCoreProperties().setLastModifiedByUser("RuanZhuCode");
+        FileOutputStream out = new FileOutputStream(outputPath + "/" + name + version + "源代码.docx");
+        doc.getProperties().getCoreProperties().setCreator("软件著作权代码文档生成器");
+        doc.getProperties().getCoreProperties().setLastModifiedByUser("软件著作权代码文档生成器");
         doc.getProperties().getCoreProperties().setRevision("1");
         doc.getProperties().getCoreProperties().setModified(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
         doc.write(out);
         out.close();
-    }
-
-    private static void createFooter(XWPFDocument doc) {
-        CTP pageNo = CTP.Factory.newInstance();
-        XWPFParagraph footer = new XWPFParagraph(pageNo, doc);
-        CTPPr begin = pageNo.addNewPPr();
-        begin.addNewPStyle().setVal("style21");
-        begin.addNewJc().setVal(STJc.CENTER);
-        pageNo.addNewR().addNewFldChar().setFldCharType(STFldCharType.BEGIN);
-        pageNo.addNewR().addNewInstrText().setStringValue("PAGE   \\* MERGEFORMAT");
-        pageNo.addNewR().addNewFldChar().setFldCharType(STFldCharType.SEPARATE);
-        CTR end = pageNo.addNewR();
-        CTRPr endRPr = end.addNewRPr();
-        endRPr.addNewNoProof();
-        endRPr.addNewLang().setVal("zh-CN");
-        end.addNewFldChar().setFldCharType(STFldCharType.END);
-        CTSectPr sectPr = doc.getDocument().getBody().isSetSectPr() ? doc.getDocument().getBody().getSectPr() : doc.getDocument().getBody().addNewSectPr();
-        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(doc, sectPr);
-        policy.createFooter(STHdrFtr.DEFAULT, new XWPFParagraph[]{footer});
-    }
-
-    private static void createHeader(XWPFDocument doc) {
-        CTSectPr sectPr = doc.getDocument().getBody().addNewSectPr();
-        XWPFHeaderFooterPolicy headerFooterPolicy = new XWPFHeaderFooterPolicy(doc, sectPr);
-        XWPFHeader header = headerFooterPolicy.createHeader(XWPFHeaderFooterPolicy.DEFAULT);
-        XWPFParagraph paragraph = header.createParagraph();
-        paragraph.setBorderBottom(Borders.THICK);
-        XWPFRun run = paragraph.createRun();
-        run.setText(name + " " + version + " 源代码");
-        run.setFontFamily("等线 (中文正文)");
-        run.setFontSize(9);
     }
 
 
